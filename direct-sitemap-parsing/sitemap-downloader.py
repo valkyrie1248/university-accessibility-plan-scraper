@@ -2,92 +2,105 @@
 import requests
 import pandas as pd
 
-def wait(adtl_info = ''):
+
+def wait():
     '''
     Use to force program to pause for user before continuing to execute
     '''
-    input(adtl_info + ' Press enter to continue.')
-
-#def domain_list(domain_inputs):
-#    return domain_inputs.split()
-
-
-#def get_maps(domain_list):
-#    maps={}
-#    for domain in domain_list:
-#        maps[f"{domain} map"] = get_map(domain)
-#    return maps
-
-def potentials(domains_list):
-    for site in domains_list[['WEBADDR', 'DISAURL']]:
-        site = site+'/sitemap.xml'
-    return domains_list
-
-def check_maps(potentials):
-    for url in potentials:
-        try:
-            print(f"Attempting to download {url}")
-            response = requests.get(url)
-            if response.txt != None:
-                url=url
-            if response.txt == None:
-                url = response.raise_for_status()
-        except Exception as e:
-            print('The error is ', e)
-            print(url + ' is not a valid sitemap.')
-            url =  'Error'
-    site_maps = potentials
-    return site_maps
-
-# def get_map(domain):
-#     try:
-#         url = domain+'/sitemap.xml'
-#         #print(f"Attempting to download {url}")
-#         response = requests.get(url)
-#         if response.txt != None:
-#             return(url)
-#         if response.txt == None:
-#             return(response.raise_for_status())
-#     except Exception as e:
-#         print('The error is ', e)
-#         #print(domain+'/sitemap.xml is not a valid sitemap.')
-#         return None
-
-#def get_maps(domain_list):
-#    maps={}
-#    for domain in domain_list['WEBADDR']:
-#        maps[f"{domain} map"] = get_map(domain_name, home, dis_serv)
-#    return maps
-
-#def get_map(domain_name, home, dis_serv):
-#    try:
-#        url = home+'/sitemap.xml'
-#        #print(f"Attempting to download {url}")
-    #     response = requests.get(url)
-    #     if response.txt != None:
-    #         return(url)
-    #     if response.txt == None:
-    #         return(response.raise_for_status())
-    # except Exception as e:
-    #     print('The error is ', e)
-    #     #print(domain+'/sitemap.xml is not a valid sitemap.')
+    input('Press enter to continue.')
 
 def domains(file):
     unis_df = pd.read_csv(file)
 #    print(unis_df.head())
     domains = unis_df[['INSTNM', 'WEBADDR', 'DISAURL']]
-    return domains
-    print(domains_list.head())
+    print(domains.head())
     wait()
+    return domains
+
+def validate(raw_domain):
+    '''
+    This should properly format any url you feed into the sitemap finder.
+    '''
+    raw_domain = raw_domain.strip("/")
+    print(f"Validating {raw_domain}...")
+    if raw_domain.startswith("http"):
+        domain = raw_domain
+        try:
+            response = requests.get(domain)
+            if response.status_code == 200:
+                return domain
+            else:
+                error = f'{domain} is not a valid website.'
+                print(error)
+                return error
+        except requests.RequestException as e:
+            error = f'An error occurred while validating {domain}: {e}'
+            print(error)
+            return error
+    else:
+        try:
+            domain = "https://"+raw_domain
+            response = requests.get(domain, timeout = 10)
+            if response.status_code == 200:
+                return domain
+            else:
+                print(f'{domain} is not a valid wesbite.')
+                try:
+                    domain = "http://"+raw_domain
+                    respone = requests.get(domain, timeout = 5)
+                    if response.status_code == 200:
+                        return domain
+                    else:
+                        error = f'{domain} is not a valid website'
+                        print(error)
+                        return error 
+                except requests.RequestException as e:
+                    error = f'An error occurred while validating {domain}: {e}'
+                    print(error)
+                    return error 
+        except requests.RequestException as e:
+            error = f'An error occurred while validating {domain}: {e}'
+            print(error)
+            return error             
+                    
+
+def check_potential(domain):
+    if domain.startswith("http"):
+        potential = domain + '/sitemap.xml'
+        try:
+            print(f"Attempting to download {potential}")
+            response = requests.get(potential, timeout = 10)
+            if response.status_code == 200:
+                url = potential
+                print(f"Sitemap Found: {url}")
+            else:
+                url = response.raise_for_status()
+                error = f'{potential} is not a valid website: {url}'
+                print(error)
+        except requests.RequestException as e:
+                        error = f'An error occurred while accessing sitemap of {potential}: {e}'
+                        print(error)
+                        return error
+        #except Exception as e:
+        #    print('The error is ', e)
+        #    print(potential + ' is not a valid sitemap.')
+        #    url =  'Error'
+        return url
+    else:
+        return domain
     
-# def get_sitemaps(domains_list):
-#     names = domains_list[['INSTNM']]
-#     home_maps = domains_list[['WEBADDR' + '/sitemap.xml']]
-#     dis_maps = domains_list[['DISAURL' + 'sitemap.xml']]
+def check_potentials(domains):
+    domains['WEBADDR'] = domains['WEBADDR'].apply(validate).apply(check_potential)
+    domains['DISAURL'] = domains['DISAURL'].apply(validate).apply(check_potential)
+#    domains['WEBADDR'] = domains['WEBADDR'].apply(check_potential)
+#    domains['DISAURL'] = domains['DISAURL'].apply(check_potential)
+    return domains
 
-#domain_inputs = input("Enter some domains with spaces between them: ")
-site_maps = check_maps(potentials(domains("/Users/harkmorper/learning-scrapers/university-accessibility-plan-scraper/websites.csv")))
-print(site_maps.head())
-
-# domain_list = 
-# print(get_maps(domain_list(domain_inputs)))
+#send the successful ones into a new file and errors into a diff file.
+    
+#site_maps = check_potentials(domains("/Users/harkmorper/learning-scrapers/university-accessibility-plan-scraper/test_websites.csv"))
+file_path = input("Input the full file path for the csv of websites: ")
+site_maps = check_potentials(domains(f'{file_path}'))
+#print(site_maps.head())
+site_maps.to_json('sitemaps.json')
+site_maps.to_csv('sitemaps.csv')
