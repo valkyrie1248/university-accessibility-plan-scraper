@@ -36,7 +36,7 @@ pub4.info()
 wait('\nAfter filtering out everything except for public, 4+ year universities, our data looks totally different!\n')
 print(pub4.head())
 
-#Okay. Let's snag the college names websites from this list.
+#Okay. Let's snag the college names & websites from this list.
 websites = pub4[['UNITID', 'INSTNM', 'WEBADDR', 'DISAURL']]
 wait('Now we pulled out just the columns with the unique IDs, school names, main website, and disability services website.')
 websites.head()
