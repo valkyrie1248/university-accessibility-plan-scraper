@@ -1,4 +1,4 @@
-#Function to try to download sitemaps for a set of domains.
+#Function to find sitemaps from a set of domains. (Hope to make it pull out websites related to accessibility soon.)
 import requests
 import pandas as pd
 
