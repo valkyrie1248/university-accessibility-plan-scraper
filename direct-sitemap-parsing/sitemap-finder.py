@@ -1,4 +1,4 @@
-#Function to find sitemaps from a set of domains. (Hope to make it pull out websites related to accessibility soon.)
+#Function to find sitemaps from a set of domains. (Hope to make it pull out websites related to accessibility soon.p )
 import requests
 import pandas as pd
 
@@ -26,7 +26,7 @@ def validate(raw_domain):
     if raw_domain.startswith("http"):
         domain = raw_domain
         try:
-            response = requests.get(domain)
+            response = requests.get(domain, timeout = 2)
             if response.status_code == 200:
                 return domain
             else:
@@ -40,14 +40,14 @@ def validate(raw_domain):
     else:
         try:
             domain = "https://"+raw_domain
-            response = requests.get(domain, timeout = 10)
+            response = requests.get(domain, timeout = 2)
             if response.status_code == 200:
                 return domain
             else:
                 print(f'{domain} is not a valid wesbite.')
                 try:
                     domain = "http://"+raw_domain
-                    respone = requests.get(domain, timeout = 5)
+                    respone = requests.get(domain, timeout = 2)
                     if response.status_code == 200:
                         return domain
                     else:
@@ -69,7 +69,7 @@ def check_potential(domain):
         potential = domain + '/sitemap.xml'
         try:
             print(f"Attempting to download {potential}")
-            response = requests.get(potential, timeout = 10)
+            response = requests.get(potential, timeout = 2)
             if response.status_code == 200:
                 url = potential
                 print(f"Sitemap Found: {url}")
