@@ -1,6 +1,7 @@
 #Function to find sitemaps from a set of domains. (Hope to make it pull out websites related to accessibility soon.p )
 import requests
 import pandas as pd
+import asyncio as aio
 
 
 def wait():
@@ -16,6 +17,8 @@ def domains(file):
     print(domains.head())
     wait()
     return domains
+
+
 
 def validate(raw_domain):
     '''
@@ -104,3 +107,14 @@ site_maps = check_potentials(domains(f'{file_path}'))
 #print(site_maps.head())
 site_maps.to_json('sitemaps.json')
 site_maps.to_csv('sitemaps.csv')
+
+
+if __name__ == '__main__':
+    start = perf_counter()
+    file_path = input("Input the full file path for the csv of websites: ")
+    site_maps = check_potentials(domains(f'{file_path}'))
+    #print(site_maps.head())
+    site_maps.to_json('sitemaps.json')
+    site_maps.to_csv('sitemaps.csv')
+    stop = perf_counter()
+    print('time taken: ', stop - start)
